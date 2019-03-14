@@ -27,6 +27,9 @@ setTimeout(() => {
 According to [@stereobooster's
 `react-ideal-image`](https://github.com/stereobooster/react-ideal-image/blob/master/introduction.md#cancel-download) the first technique (using <code>img = new Image(); img.src = ""</code>) doesn't work in <b>Mobile Safari</b>. That's a hugely popular browser so it's important to test if that's true.
 
+The purpose of this experiment is to help:
+[github.com/peterbe/autocomplete-with-images](https://github.com/peterbe/autocomplete-with-images)
+
 ## To run
 
 ```
