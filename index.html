@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html class="no-js" lang="">
+  <head>
+    <meta charset="utf-8" />
+    <title>Cancelling Preloading of Images</title>
+    <meta name="description" content="Which browsers does it work on?" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      img {
+        width: 100px;
+        height: 100px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>Cancelling Preloading of Images</h1>
+
+    <div>
+      <button id="image" type="text">
+        Preload with <code>new Image()</code>
+      </button>
+      <button id="xhr" type="text">
+        Preload with <code>XMLHttpRequest</code>
+      </button>
+    </div>
+    <p>
+      <!-- <small>You might wanna watch the Web Console for logging.</small> -->
+      <b>Log</b>
+      <pre></pre>
+    </p>
+    <script>
+      const $log = document.querySelector('pre')
+      function log(msg) {
+        $log.textContent = $log.textContent + '\n' + (new Date()).getTime() + ':' + msg;
+      }
+      function getRandomArbitrary(min, max) {
+        return Math.trunc(Math.random() * (max - min) + min);
+      }
+      function insertImage(url) {
+        const img = document.createElement("img");
+        img.src = url;
+        img.alt = "Sample image";
+        document.body.appendChild(img);
+      }
+      class UnfetchAbortController {
+        constructor() {
+          this.signal = {onabort: () => {}}
+          this.abort = () => this.signal.onabort()
+        }
+      }
+      const URL = "https://picsum.photos/1000/1000?image=";
+      window.addEventListener("load", function(event) {
+        // By `new Image()`
+        document
+          .querySelector("button#image")
+          .addEventListener("click", function(event) {
+            const url = URL + getRandomArbitrary(1, 100);
+            const img = new Image();
+            img.onload = function() {
+              log("Fully loaded image");
+              if (!img.decoded) {
+                insertImage(url);
+              }
+            };
+            if (img.decoded) {
+              img.decoded().then(function() {
+                log("Fully decoded image");
+                insertImage(url);
+              });
+            }
+            img.src = url;
+            log("Image set")
+            setTimeout(() => {
+              log('Cancelled image')
+              img.src = "";
+            });
+          });
+        // By `XMLHttpRequest`
+        document
+          .querySelector("button#xhr")
+          .addEventListener("click", function(event) {
+            const url = URL + getRandomArbitrary(1, 100);
+            const request = new XMLHttpRequest();
+            request.open('get', url, true);
+            // Who knows, is `request.addEventListener("load", () => {})` better?
+            request.onload = () => {
+              log("Fully loaded XHR");
+              insertImage(url);
+            }
+            request.onabort = () => {
+              log("Cancelled xhr");
+            }
+            //request.addEventListener("load", () => {
+            //  console.log("Fully loaded XHR (2)");
+            //  insertImage(url);
+            //});
+            request.send();
+            log("XHR sent");
+            setTimeout(() => {
+              request.abort();
+            });
+          });
+      });
+    </script>
+  </body>
+</html>
